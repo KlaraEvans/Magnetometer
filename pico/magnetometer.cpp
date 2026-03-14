@@ -78,6 +78,7 @@ void Setup(void) {
 //**********************************************************
     myTFT.TFTfillScreen(ST7735_BLACK);
 	myTFT.TFTFontNum(TFTFont_Default);
+    //myTFT.TFTsetRotation(TFT_rotate_e::TFT_90_degrees);
 }
 void log_data(const char* data) {
     FIL fil;
@@ -87,6 +88,7 @@ void log_data(const char* data) {
     if (FR_OK != fr) return;
 
     f_write(&fil, data, strlen(data), &bw);
+     f_write(&fil, "\n", 1, &bw);  
     f_close(&fil); 
 }
 double find_K(){
@@ -120,7 +122,7 @@ int main() {
     Setup();
     char str[] = "Hallo!";
 	myTFT.TFTdrawText(5, 5, str, ST7735_WHITE, ST7735_BLACK, 2);
-    char str1[] = "K=";
+    char str1[] = "U2=";
     myTFT.TFTdrawText(5, 40, str1, ST7735_GREENYELLOW, ST7735_BLACK, 2);
     for(int i = 0; i < N; i++) { // sin(2wt) u. cos(2wt)
         double phase = (double)i/N0 * (4.0*pi);
@@ -139,6 +141,7 @@ if (!is_sd) { //keine SD Karte annerkant
     char fehler[] = "SD Fehlt";
     myTFT.TFTdrawText(5, 80, fehler, ST7735_RED, ST7735_BLACK, 2);
 }
+else log_data("--------------");
 while (1) {
         vector <double> K_series(100);
         for(int j = 0; j < 100; j++){
@@ -152,8 +155,8 @@ while (1) {
         }
         K_average /= 80.0;
         char buf[10];
-        sprintf(buf, "%.3f ", K_average);
-        myTFT.TFTdrawText(30, 40, buf, ST7735_GREENYELLOW, ST7735_BLACK, 2);
+        sprintf(buf, "%.3f  ", K_average);
+        myTFT.TFTdrawText(40, 40, buf, ST7735_GREENYELLOW, ST7735_BLACK, 2);
         if(is_sd) log_data(buf);
         printf(buf);
     }
