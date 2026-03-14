@@ -7,8 +7,14 @@
 #include "st7735/ST7735_TFT.hpp"
 #include <vector>
 #include <algorithm>
+#include "hw_config.h"
+#include "f_util.h"
+#include "ff.h"
 using namespace std;
-//TODO: SD_Karte
+#define ST7735_TEAL 0x03ef
+#define ST7735_GREENYELLOW 0xb7e0
+#define ST7735_TAN 0xd5b1
+
 ST7735_TFT myTFT;
 #define pi atan(1)*4
 const double conversion_factor = 3.3*1000 / (1 << 12); //mV
@@ -18,7 +24,11 @@ const int N = 192;
 const double N0 = 96;
 double sin_werte[N];
 double cos_werte[N];
-double offcet_previous = 1.65;
+
+bool is_sd = true;
+bool is_sd_write = true;
+
+//double offcet_previous = 1.65;
 void Setup(void) {	
     stdio_init_all();
     gpio_init(LED_PIN);
@@ -47,12 +57,12 @@ void Setup(void) {
 // ******** USER OPTION 1 GPIO *********
 // NOTE if using Hardware SPI clock and data pins will be tied to 
 // the chosen interface eg Spi0 CLK=18 DIN=19)
-	int8_t SDIN_TFT = 19; 
-	int8_t SCLK_TFT = 18; 
-	int8_t DC_TFT = 3;
-	int8_t CS_TFT = 2 ;  
-	int8_t RST_TFT = 17;
-	myTFT.TFTSetupGPIO(RST_TFT, DC_TFT, CS_TFT, SCLK_TFT, SDIN_TFT);
+	int8_t SCLK_TFT = 2; 
+    int8_t SDA_TFT = 3;
+    int8_t RS_TFT = 4; 
+    int8_t RST_TFT = 6;
+	int8_t CS_TFT = 5 ;  
+	myTFT.TFTSetupGPIO(RST_TFT, RS_TFT, CS_TFT, SCLK_TFT, SDA_TFT);
 //**********************************************************
 
 // ****** USER OPTION 2 Screen Setup ****** 
@@ -64,24 +74,20 @@ void Setup(void) {
 // ******************************************
 
 // ******** USER OPTION 3 PCB_TYPE  **************************
-	myTFT.TFTInitPCBType(TFT_ST7735R_Red); // pass enum,4 choices,see README
+	myTFT.TFTInitPCBType(TFT_ST7735S_Black); // pass enum,4 choices,see README
 //**********************************************************
     myTFT.TFTfillScreen(ST7735_BLACK);
 	myTFT.TFTFontNum(TFTFont_Default);
 }
+void log_data(const char* data) {
+    FIL fil;
+    UINT bw;
 
+    FRESULT fr = f_open(&fil, "messung.txt", FA_WRITE | FA_OPEN_APPEND);
+    if (FR_OK != fr) return;
 
-
-void my_sort(double arr[], int n) {
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = 0; j < n - i - 1; j++) {
-            if (arr[j] > arr[j + 1]) {
-                double temp = arr[j];
-                arr[j] = arr[j + 1];
-                arr[j + 1] = temp;
-            }
-        }
-    }
+    f_write(&fil, data, strlen(data), &bw);
+    f_close(&fil); 
 }
 double find_K(){
     double spannung[N];
@@ -100,46 +106,56 @@ double find_K(){
        }
        offcet /= N;
        //myTFT.TFTdrawText(5, 20, str2, ST7735_WHITE, ST7735_BLACK, 2);
-       double K_sin = 0, K_cos = 0;
+       double A = 0, B = 0;
        for(int i = 0; i < N; i++){
             spannung[i] -= offcet;
-            K_sin += spannung[i]*sin_werte[i];
-            K_cos += spannung[i]*cos_werte[i];
+            B += spannung[i]*sin_werte[i];
+            A += spannung[i]*cos_werte[i];
        }
         int sign = 1;
-        offcet_previous = offcet;
-       return sqrt(K_sin*K_sin + K_cos * K_cos)*sign;
+        //offcet_previous = offcet;
+       return sqrt(A*A + B * B)*sign;
 }
 int main() {
     Setup();
-    char str[] = "Hallo! ";
+    char str[] = "Hallo!";
 	myTFT.TFTdrawText(5, 5, str, ST7735_WHITE, ST7735_BLACK, 2);
+    char str1[] = "K=";
+    myTFT.TFTdrawText(5, 40, str1, ST7735_GREENYELLOW, ST7735_BLACK, 2);
     for(int i = 0; i < N; i++) { // sin(2wt) u. cos(2wt)
         double phase = (double)i/N0 * (4.0*pi);
         sin_werte[i] = sin(phase);
         cos_werte[i] = cos(phase);
     }
     adc_select_input(1);
-    //
-    while (1) {
+
+ // SD-Karte mounten
+FATFS fs;
+FRESULT fr = f_mount(&fs, "", 1);
+is_sd = (fr == FR_OK);
+
+if (!is_sd) { //keine SD Karte annerkant
+    printf("f_mount error: %s (%d)\n", FRESULT_str(fr), fr);
+    char fehler[] = "SD Fehlt";
+    myTFT.TFTdrawText(5, 80, fehler, ST7735_RED, ST7735_BLACK, 2);
+}
+while (1) {
         vector <double> K_series(100);
-       
         for(int j = 0; j < 100; j++){
-       //myTFT.TFTdrawText(5, 20, str1, ST7735_WHITE, ST7735_BLACK, 2);
-       double K = find_K();
-       //K -= find_K();
-       K_series[j] = K/(double)N;
-    }
-    sort(K_series.begin(), K_series.end());
-    double K_average = 0;
-    for(int i = 10; i < 90; i++){
-        K_average +=K_series[i];
-    }
-    K_average /= 80.0;
-       char buf[10];
-       sprintf(buf, "K=%.3f    ", K_average);
-        myTFT.TFTdrawText(5, 40, buf, ST7735_WHITE, ST7735_BLACK, 2);
-        printf("%.3f\n", K_average);
+            double K = find_K();
+            K_series[j] = K/(double)N;
+        }
+        sort(K_series.begin(), K_series.end());
+        double K_average = 0;
+        for(int i = 10; i < 90; i++){
+             K_average +=K_series[i];
+        }
+        K_average /= 80.0;
+        char buf[10];
+        sprintf(buf, "%.3f ", K_average);
+        myTFT.TFTdrawText(30, 40, buf, ST7735_GREENYELLOW, ST7735_BLACK, 2);
+        if(is_sd) log_data(buf);
+        printf(buf);
     }
 }
   

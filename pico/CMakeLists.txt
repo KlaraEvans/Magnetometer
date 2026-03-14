@@ -1,6 +1,6 @@
 # Generated Cmake Pico project file
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.5)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
@@ -35,10 +35,14 @@ project(magnetometer C CXX ASM)
 # Creates a pico-sdk subdirectory in our project for the libraries
 pico_sdk_init()
 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/SD/src build)
+
 # Tell CMake where to find the executable source file
 add_executable(${PROJECT_NAME} 
   #test.cpp
   magnetometer.cpp
+  #main.c
+  hw_config.c
   #examples/ST7735_TFT_TESTS/main.cpp
   #examples/ST7735_TFT_BMP_DATA/main.cpp
   #examples/ST7735_TFT_BMP_SDCARD/main.cpp
@@ -58,7 +62,7 @@ target_sources(pico_st7735 INTERFACE
 target_include_directories(pico_st7735 INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ST7735/include)
 
 # Pull in pico libraries that we need
-target_link_libraries(${PROJECT_NAME} pico_stdlib hardware_adc hardware_spi pico_st7735 )
+target_link_libraries(${PROJECT_NAME} pico_stdlib hardware_adc hardware_spi pico_st7735  no-OS-FatFS-SD-SDIO-SPI-RPi-Pico)
 
 
 # Enable usb output, disable uart output
