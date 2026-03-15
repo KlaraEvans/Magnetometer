@@ -84,7 +84,7 @@ void log_data(const char* data) {
     FIL fil;
     UINT bw;
 
-    FRESULT fr = f_open(&fil, "messung.txt", FA_WRITE | FA_OPEN_APPEND);
+    FRESULT fr = f_open(&fil, "messung.csv", FA_WRITE | FA_OPEN_APPEND);
     if (FR_OK != fr) return;
 
     f_write(&fil, data, strlen(data), &bw);
