@@ -80,20 +80,20 @@ void Setup(void) {
 	myTFT.TFTFontNum(TFTFont_Default);
     //myTFT.TFTsetRotation(TFT_rotate_e::TFT_90_degrees);
 }
-void log_data(const char* data) {
+void log_data(const char* data, const char* filename) {
     FIL fil;
     UINT bw;
 
-    FRESULT fr = f_open(&fil, "messung.csv", FA_WRITE | FA_OPEN_APPEND);
+    FRESULT fr = f_open(&fil, filename, FA_WRITE | FA_OPEN_APPEND);
     if (FR_OK != fr) return;
 
     f_write(&fil, data, strlen(data), &bw);
-     f_write(&fil, "\n", 1, &bw);  
+    f_write(&fil, "\n", 1, &bw);  
     f_close(&fil); 
 }
 double find_K(){
-    double spannung[N];
-       double raw[N];
+        double spannung[N];
+        double raw[N];
        //gpio_put(15, 1);
        for(int i = 0; i < N; i++){
             raw[i] = adc_read();
@@ -141,8 +141,12 @@ if (!is_sd) { //keine SD Karte annerkant
     char fehler[] = "SD Fehlt";
     myTFT.TFTdrawText(5, 80, fehler, ST7735_RED, ST7735_BLACK, 2);
 }
-else log_data("--------------");
+else { log_data("--------------", "messung.csv");
+     log_data("--------------", "minmittel.csv");
+}
 while (1) {
+    double minmittel = 0;
+    for(int k = 0; k < 247; k++){
         vector <double> K_series(100);
         for(int j = 0; j < 100; j++){
             double K = find_K();
@@ -154,11 +158,17 @@ while (1) {
              K_average +=K_series[i];
         }
         K_average /= 80.0;
+        minmittel += K_average;
         char buf[10];
         sprintf(buf, "%.3f  ", K_average);
         myTFT.TFTdrawText(40, 40, buf, ST7735_GREENYELLOW, ST7735_BLACK, 2);
-        if(is_sd) log_data(buf);
+        if(is_sd) log_data(buf, "messung.csv");
         printf(buf);
+    }
+    minmittel /= 247.0;
+    char buf[10];
+    sprintf(buf, "%.3f  ", minmittel);
+    if(is_sd) log_data(buf, "minmittel.csv");
     }
 }
   
