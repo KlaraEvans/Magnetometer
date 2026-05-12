@@ -7,6 +7,7 @@
  */
 
 #include "../include/st7735/ST7735_TFT_graphics.hpp"
+#include <string_view>
 #include "../include/st7735/ST7735_TFT.hpp"
 #include "../include/st7735/ST7735_TFT_Font.hpp"   
 
@@ -428,19 +429,17 @@ void ST7735_TFT_graphics ::TFTsetTextWrap(bool w) {
 // Param 6: size 1-x
 // Notes for font #1-6
 
-void ST7735_TFT_graphics ::TFTdrawText(uint8_t x, uint8_t y, char *ptext, uint16_t color, uint16_t bg, uint8_t size) {
+void ST7735_TFT_graphics ::TFTdrawText(uint8_t x, uint8_t y, std::string_view text, uint16_t color, uint16_t bg, uint8_t size) {
 	uint8_t _cursorX, _cursorY;
-	uint16_t _textSize, i;
 	_cursorX = x, _cursorY = y;
-	_textSize = strlen(ptext);
-	for (i = 0; i < _textSize; i++) {
+	for (size_t i = 0; i < text.size(); i++) {
 		if (_wrap && ((_cursorX + size * _CurrentFontWidth) > _widthTFT)) {
 			_cursorX = 0;
 			_cursorY = _cursorY + size * 7 + 3;
 			if (_cursorY > _heightTFT) _cursorY = _heightTFT;
-			if (ptext[i] == _CurrentFontoffset ) goto _skip;
+			if (text[i] == _CurrentFontoffset) goto _skip;
 		}
-		TFTdrawChar(_cursorX, _cursorY, ptext[i], color, bg, size);
+		TFTdrawChar(_cursorX, _cursorY, text[i], color, bg, size);
 		_cursorX = _cursorX + size * (_CurrentFontWidth + 1);
 		if (_cursorX > _widthTFT) _cursorX = _widthTFT;
 _skip:
@@ -841,11 +840,11 @@ void ST7735_TFT_graphics ::TFTdrawCharNumFont(uint8_t x, uint8_t y, uint8_t c, u
 // Param 5: background color
 // Notes for font 7 8 only
 
-void ST7735_TFT_graphics ::TFTdrawTextNumFont(uint8_t x, uint8_t y, char *pText, uint16_t color, uint16_t bg)
+void ST7735_TFT_graphics ::TFTdrawTextNumFont(uint8_t x, uint8_t y, std::string_view text, uint16_t color, uint16_t bg)
 {
 	if (_FontNumber < TFTFont_Bignum){return ;} // for font 7,6 only
 
-	while (*pText != '\0')
+	for (size_t i = 0; i < text.size(); i++)
 	{
 		if (x > (_widthTFT - _CurrentFontWidth ))
 		{
@@ -856,9 +855,8 @@ void ST7735_TFT_graphics ::TFTdrawTextNumFont(uint8_t x, uint8_t y, char *pText,
 				y = x = 0;
 			}
 		}
-		TFTdrawCharNumFont(x, y, *pText, color, bg);
+		TFTdrawCharNumFont(x, y, text[i], color, bg);
 		x += _CurrentFontWidth ;
-		pText++;
 	}
 }
 

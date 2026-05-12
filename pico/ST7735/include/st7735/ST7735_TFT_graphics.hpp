@@ -14,6 +14,7 @@
 #include <cstring> //strlen
 #include <cstdio> 
 #include <cstdlib>
+#include <string_view>
 #include "hardware/spi.h"
 #include "ST7735_TFT_Print.hpp" 
 
@@ -95,9 +96,9 @@ class ST7735_TFT_graphics : public Print {
 	void TFTsetTextWrap(bool w);
 	void TFTFontNum(TFT_FONT_TYPE_e FontNumber);
 	void TFTdrawChar(uint8_t x, uint8_t y, uint8_t c, uint16_t color, uint16_t bg, uint8_t size);
-	void TFTdrawText(uint8_t x, uint8_t y, char *_text, uint16_t color, uint16_t bg, uint8_t size);
+	void TFTdrawText(uint8_t x, uint8_t y, std::string_view text, uint16_t color, uint16_t bg, uint8_t size);
 	void TFTdrawCharNumFont(uint8_t x, uint8_t y, uint8_t c, uint16_t color ,uint16_t bg);
-	void TFTdrawTextNumFont(uint8_t x, uint8_t y, char *pText, uint16_t color, uint16_t bg);
+	void TFTdrawTextNumFont(uint8_t x, uint8_t y, std::string_view text, uint16_t color, uint16_t bg);
 	void setTextColor(uint16_t c);
 	void setTextColor(uint16_t c, uint16_t bg);
 	void setTextSize(uint8_t s);
