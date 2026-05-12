@@ -1,16 +1,31 @@
 # Magnetometer 
 DE:
 Software für das selbstgebaute Magnetometer mit dem selbstgebauten Fluxgate-Sensor. Dieses Readme und das Programm befinden sich noch in Bearbeitung.
+
+Gerade verfügt das Magnetometer über ein Bildschirm mit einer SD Karte (ST7735 1,8 Zoll) und über eine RTC DS3231.
+RTC gibt die Zeit und die Temperatur aus. Auf der SD Karte wird der mit einer der 3 Methoden berechnete Wert der Spannung sowie die Zeit, der Tag und die Temperatur gespeichert.
+In der Zukunft ist es geplannt, noch Eingabetasten und die Kommunikation zwischen dem Pico und dem ESP32 einzuführen.
 ### Anleitung für Flashen der Programme:
 Für ESP32: Ordner "cos-generator" aus "esp32" herunterladen und als Projekt in Arduino IDE öffnen
 
 Für Pico:
-1) Ordner "magnetometer" erstellen
-2) Alle Dateien aus dem Ordner Pico kopieren
-3) VS Code und Pico SDK Extension installieren
-4) Pico SDK Extension: Import Project -> Ordner "magnetometer" finden -> Import
-5) RPi-Pico Bootsell drücken und Pico einstecken
-6) Build
+1) VS Code und Pico SDK Extension installieren
+2) Pico SDK Extension: Import Project -> Ordner "pico" finden -> Import
+3) ggf. RPi-Pico Bootsell drücken und Pico einstecken
+4) Build
+Auf Linux muss in der Datei .vscode/tasks.json an der Stelle "Run Project" folgendes:
+{
+            "label": "Run Project",
+            "type": "process",
+            "command": "sudo",
+            "args": [
+               "${env:HOME}/.pico-sdk/picotool/2.2.0-a4/picotool/picotool",
+                "load",
+                "${command:raspberry-pi-pico.launchTargetPath}",
+                "-fx"
+            ],....
+}
+Also nur Zeilen 23 und 24 ergänzen. 
 ### Änderung der Frequenz
-Gerade ist die Frequenz von ESP32 auf 4100 Hz eingestellt, und so ist die Anzahl N0 und N in Pico Programm. 
-Um die Frequenz zu ändern, stelle sie in ESP32 Programm um, dann in CMakeFiles.txt bei "add executable" magnetometer.cpp kommentieren: "#magnetometer.cpp" und "#test.cpp" auskommentieren. Dann mit Anpassen verschiedener Werte von N in test.cpp finde den Wert N, für den das Bildschirm ungefähr 1 ausgibt. Das ist dann N0 in der Datei "magnetometer.cpp". N ist dann in der Regel 2*N0 zu einstellen.
+Derzeit kann man die Frequenz nur manuell ändern. Dazu ändere die entsprechende Stelle in cos_generator.ino. Dann ließe die Datei test/time_test.cpp laufen. Es berechnet die Samples-Anzahl für die schnelle und die übliche Methode der ADC-Auslesung.
+
