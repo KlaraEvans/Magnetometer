@@ -35,17 +35,16 @@ project(magnetometer C CXX ASM)
 # Creates a pico-sdk subdirectory in our project for the libraries
 pico_sdk_init()
 
+
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/SD/src build)
 
 # Tell CMake where to find the executable source file
 add_executable(${PROJECT_NAME} 
-  #test.cpp
-  magnetometer.cpp
-  #main.c
+  #tests/adc_test.cpp
+  #tests/time_test.cpp
+  main.cpp
   hw_config.c
-  #examples/ST7735_TFT_TESTS/main.cpp
-  #examples/ST7735_TFT_BMP_DATA/main.cpp
-  #examples/ST7735_TFT_BMP_SDCARD/main.cpp
+# time_setup.cpp
 )
 
 # Create map/bin/hex/uf2 files
@@ -62,9 +61,29 @@ target_sources(pico_st7735 INTERFACE
 target_include_directories(pico_st7735 INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ST7735/include)
 
 # Pull in pico libraries that we need
-target_link_libraries(${PROJECT_NAME} pico_stdlib hardware_adc hardware_spi pico_st7735  no-OS-FatFS-SD-SDIO-SPI-RPi-Pico)
 
 
+add_library(pico_ds3231 INTERFACE)
+
+target_sources(pico_ds3231 INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/ds3231/ds3231.cpp
+)
+
+target_include_directories(pico_ds3231 INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/ds3231
+)
+
+target_link_libraries(${PROJECT_NAME} pico_stdlib hardware_adc hardware_spi hardware_i2c pico_st7735  no-OS-FatFS-SD-SDIO-SPI-RPi-Pico pico_ds3231 
+)
+
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  LFS_THREADSAFE=1
+  LFS_NO_DEBUG=1
+)
+
+
+target_compile_features(magnetometer PRIVATE cxx_std_20)
 # Enable usb output, disable uart output
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
 pico_enable_stdio_uart(${PROJECT_NAME} 0)

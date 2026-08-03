@@ -15,7 +15,10 @@ ST7735_TFT myTFT;
 
 int main() {
     stdio_init_all();
-    rtc::ds3231_init();
+    rtc::rtc_init_auto();
+    bool is_rtc = rtc::ds3231_scan();
+    rtc::RtcType chip = rtc::rtc_get_type();
+
     
     myTFT.TFTInitSPIType(8000, spi0);
     myTFT.TFTSetupGPIO(RST_TFT, RS_TFT, CS_TFT, SCLK_TFT, SDA_TFT);
@@ -23,6 +26,16 @@ int main() {
     myTFT.TFTInitPCBType(TFT_ST7735S_Black);
     myTFT.TFTsetRotation(TFT_Degrees_90);
     myTFT.TFTfillScreen(ST7735_BLACK);
+    if (!is_rtc) {
+        myTFT.TFTdrawText(10, 55, "No RTC found!", ST7735_RED, ST7735_BLACK, 2);
+        while(true) sleep_ms(1000);
+    }
+
+    if (chip == rtc::RtcType::DS3231)
+        myTFT.TFTdrawText(10, 5, "DS3231", ST7735_GREEN, ST7735_BLACK, 1);
+    else if (chip == rtc::RtcType::DS1307)
+        myTFT.TFTdrawText(10, 5, "DS1307", ST7735_GREEN, ST7735_BLACK, 1);
+
      myTFT.TFTdrawText(10, 55,"Time not set", ST7735_WHITE, ST7735_BLACK, 2);
      sleep_ms(5000);
     printf("Enter date and time: DD MM YY HH MM SS\n");

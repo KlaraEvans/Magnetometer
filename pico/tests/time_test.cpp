@@ -153,9 +153,25 @@ double method1(){
             n = N;
             break;
         case 1:
-            fast(spannung, N);
+            fast(spannung, N_fast);
             break;
+        }
+    //finden, wo lokales max ist und wo locales min
+    int erste_max = 0, erste_min = 0;
+    bool emax_set = false;
+    bool emin_set = false;
+    for(int i = 1; i < n-1; i++){
+        if(spannung[i-1] < spannung[i] && spannung[i] > spannung[i+1] && !emax_set) {
+            erste_max = i;
+            emax_set = true;
+        }
+        if(spannung[i-1] > spannung[i] && spannung[i] < spannung[i+1] && !emin_set) {
+            erste_min = i;
+            emin_set = true;
+        }
+        if(emin_set && emax_set) break;
     }
+
     sort(spannung, spannung + n);
        double max = 0, min = 0;
        for(int i = 0; i < 2*k; i++) { //Die Spannungsdaten haben die Peiode von 2f
@@ -163,8 +179,9 @@ double method1(){
         max += spannung[n-1-i];
        }
        max /= (2*k); min /= (2*k);
+       int sign = erste_max < erste_min ? 1 : -1;
        double U2 = (max - min)/2.0;
-       return U2;
+       return U2*sign;
 }
 double method2(){
     int n = N_fast;
