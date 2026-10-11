@@ -15,9 +15,9 @@ if(WIN32)
 else()
     set(USERHOME $ENV{HOME})
 endif()
-set(sdkVersion 2.2.0)
+set(sdkVersion 2.3.1)
 set(toolchainVersion 13_2_Rel1)
-set(picotoolVersion 2.2.0-a4)
+set(picotoolVersion 2.3.1)
 set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
 if (EXISTS ${picoVscode})
     include(${picoVscode})
@@ -44,7 +44,9 @@ add_executable(${PROJECT_NAME}
   #tests/time_test.cpp
   main.cpp
   hw_config.c
-# time_setup.cpp
+  #main_2core.cpp
+  #time_setup.cpp
+ #tests/time_test_2core.cpp
 )
 
 # Create map/bin/hex/uf2 files
@@ -63,18 +65,19 @@ target_include_directories(pico_st7735 INTERFACE ${CMAKE_CURRENT_LIST_DIR}/ST773
 # Pull in pico libraries that we need
 
 
-add_library(pico_ds3231 INTERFACE)
+add_library(pico_rtc INTERFACE)
 
-target_sources(pico_ds3231 INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/ds3231/ds3231.cpp
+target_sources(pico_rtc INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/rtc/rtc.cpp
 )
 
-target_include_directories(pico_ds3231 INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/ds3231
+target_include_directories(pico_rtc INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/rtc
 )
-
-target_link_libraries(${PROJECT_NAME} pico_stdlib hardware_adc hardware_spi hardware_i2c pico_st7735  no-OS-FatFS-SD-SDIO-SPI-RPi-Pico pico_ds3231 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  PICO_CORE1_STACK_SIZE=0x1000
 )
+target_link_libraries(${PROJECT_NAME} pico_stdlib hardware_adc hardware_spi hardware_i2c pico_st7735 no-OS-FatFS-SD-SDIO-SPI-RPi-Pico pico_rtc pico_multicore)
 
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
